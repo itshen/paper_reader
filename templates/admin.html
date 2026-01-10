@@ -326,19 +326,28 @@
             <h2>📋 MCP 客户端配置</h2>
             <p class="section-desc">复制以下配置到 Cursor / Claude Desktop 的 MCP 设置中</p>
             <div style="position: relative;">
-                <pre class="mcp-config" id="mcpConfig">{
-  "mcpServers": {
-    "time-calc": {
-      "url": "http://localhost:8765/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_TOKEN_HERE"
-      }
-    }
-  }
-}</pre>
+                <pre class="mcp-config" id="mcpConfig"></pre>
                 <button class="btn-copy-config" onclick="copyConfig()">复制配置</button>
             </div>
         </div>
+        <script>
+            // 动态生成 MCP 配置
+            function updateMcpConfig() {
+                const baseUrl = window.location.origin;
+                const config = {
+                    "mcpServers": {
+                        "paper-reader": {
+                            "url": baseUrl + "/mcp",
+                            "headers": {
+                                "Authorization": "Bearer YOUR_TOKEN_HERE"
+                            }
+                        }
+                    }
+                };
+                document.getElementById('mcpConfig').textContent = JSON.stringify(config, null, 2);
+            }
+            updateMcpConfig();
+        </script>
         
         <!-- 修改密码 -->
         <div class="admin-section">
