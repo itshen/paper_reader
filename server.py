@@ -769,6 +769,13 @@ def run_server():
             return RedirectResponse(url="/login", status_code=302)
         return templates.TemplateResponse("index.html", {"request": request})
     
+    @app.get("/test")
+    async def test_page(request: Request):
+        """工具测试页面"""
+        if not check_auth(request):
+            return RedirectResponse(url="/login", status_code=302)
+        return templates.TemplateResponse("test.html", {"request": request})
+    
     @app.get("/admin")
     async def admin_page(request: Request):
         """管理页面"""
