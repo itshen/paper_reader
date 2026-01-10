@@ -680,11 +680,27 @@ a:hover {
 }
 
 .log-path {
-    max-width: 300px;
+    max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-secondary);
+}
+
+.log-params {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-family: 'SF Mono', Monaco, monospace;
+}
+
+.log-ip {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 .log-duration {

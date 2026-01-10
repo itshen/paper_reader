@@ -88,7 +88,8 @@
                     <tr>
                         <th style="width: 60px">类型</th>
                         <th style="width: 70px">方法</th>
-                        <th>路径</th>
+                        <th style="width: 150px">路径</th>
+                        <th>参数</th>
                         <th style="width: 120px">IP</th>
                         <th style="width: 60px">状态</th>
                         <th style="width: 70px">耗时</th>
@@ -98,7 +99,7 @@
                 </thead>
                 <tbody id="logs-body">
                     <tr>
-                        <td colspan="8" class="text-center text-muted">加载中...</td>
+                        <td colspan="9" class="text-center text-muted">加载中...</td>
                     </tr>
                 </tbody>
             </table>
@@ -138,6 +139,36 @@
     let currentPage = 1;
     const pageSize = 50;
     let searchTimeout = null;
+    
+    function formatParams(body) {
+        if (!body) return '';
+        try {
+            if (typeof body === 'string') {
+                body = JSON.parse(body);
+            }
+            // 提取关键参数显示
+            const keys = Object.keys(body);
+            if (keys.length === 0) return '';
+            
+            // 显示前几个关键参数
+            const parts = [];
+            for (const key of keys.slice(0, 3)) {
+                let val = body[key];
+                if (typeof val === 'string' && val.length > 30) {
+                    val = val.substring(0, 30) + '...';
+                } else if (typeof val === 'object') {
+                    val = JSON.stringify(val).substring(0, 30) + '...';
+                }
+                parts.push(`${key}=${val}`);
+            }
+            if (keys.length > 3) {
+                parts.push('...');
+            }
+            return parts.join(', ');
+        } catch (e) {
+            return String(body).substring(0, 50);
+        }
+    }
 
     async function loadLogs() {
         const type = document.getElementById('filter-type').value;
@@ -177,7 +208,7 @@
         const tbody = document.getElementById('logs-body');
         
         if (!logs || logs.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无日志</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无日志</td></tr>';
             return;
         }
         
@@ -195,11 +226,14 @@
             const methodClass = log.method.toLowerCase();
             const typeClass = log.type;
             
+            const paramsStr = formatParams(log.request_body);
+            
             return `
                 <tr class="${isError ? 'error-row' : ''}" onclick="showLogDetail(${log.id})">
                     <td><span class="log-type ${typeClass}">${log.type.toUpperCase()}</span></td>
                     <td><span class="log-method ${methodClass}">${log.method}</span></td>
                     <td class="log-path" title="${log.path}">${log.title || log.path}</td>
+                    <td class="log-params" title="${paramsStr}">${paramsStr || '-'}</td>
                     <td class="log-ip">${log.client_ip || '-'}</td>
                     <td><span class="log-status ${isError ? 'error' : 'success'}">${log.response_status || '-'}</span></td>
                     <td class="log-duration">${log.duration_ms || 0}ms</td>
