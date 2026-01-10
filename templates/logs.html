@@ -146,20 +146,27 @@
             if (typeof body === 'string') {
                 body = JSON.parse(body);
             }
-            // 提取关键参数显示
-            const keys = Object.keys(body);
+            
+            // MCP 请求的参数在 params 字段里
+            let params = body.params || body;
+            if (typeof params === 'string') {
+                params = JSON.parse(params);
+            }
+            
+            const keys = Object.keys(params);
             if (keys.length === 0) return '';
             
             // 显示前几个关键参数
             const parts = [];
             for (const key of keys.slice(0, 3)) {
-                let val = body[key];
-                if (typeof val === 'string' && val.length > 30) {
-                    val = val.substring(0, 30) + '...';
+                let val = params[key];
+                if (typeof val === 'string') {
+                    val = val.length > 40 ? val.substring(0, 40) + '...' : val;
                 } else if (typeof val === 'object') {
-                    val = JSON.stringify(val).substring(0, 30) + '...';
+                    val = JSON.stringify(val);
+                    val = val.length > 40 ? val.substring(0, 40) + '...' : val;
                 }
-                parts.push(`${key}=${val}`);
+                parts.push(`${key}="${val}"`);
             }
             if (keys.length > 3) {
                 parts.push('...');
