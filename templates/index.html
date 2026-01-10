@@ -341,27 +341,28 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            min-height: 400px; /* 固定高度防止抖动 */
+            max-height: 600px;
+            overflow-y: hidden; /* 自动滚动 */
+            padding-bottom: 2rem;
         }
 
         .chat-message {
             display: flex;
             gap: 0.75rem;
-            opacity: 0;
-            animation: fadeSlideIn 0.5s ease forwards;
+            width: 100%;
+        }
+        
+        .chat-message.fade-in {
+            animation: fadeSlideIn 0.4s ease forwards;
         }
 
         .chat-message.user { justify-content: flex-end; }
         .chat-message.ai { justify-content: flex-start; }
 
         @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .chat-avatar {
@@ -376,24 +377,18 @@
             flex-shrink: 0;
         }
 
-        .user-avatar {
-            background: var(--accent);
-            color: white;
-            order: 2;
-        }
-
-        .ai-avatar {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-        }
+        .user-avatar { background: var(--accent); color: white; order: 2; }
+        .ai-avatar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
 
         .chat-bubble {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 0.875rem 1.25rem;
-            max-width: 80%;
+            max-width: 85%;
             font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: var(--shadow-sm);
         }
 
         .chat-message.user .chat-bubble {
@@ -403,57 +398,49 @@
             border-radius: 16px 16px 4px 16px;
         }
 
-        .chat-message.ai .chat-bubble {
-            border-radius: 16px 16px 16px 4px;
+        .chat-message.ai .chat-bubble { border-radius: 16px 16px 16px 4px; }
+
+        .status-bubble {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
         }
 
-        .result-bubble {
-            padding: 1rem;
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 2px;
+            animation: typing 1s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
         }
 
         .paper-result {
             background: var(--bg-subtle);
             border-radius: 8px;
             padding: 1rem;
+            border-left: 3px solid var(--accent);
         }
 
-        .paper-title {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: var(--accent);
-        }
+        .paper-title { font-weight: 700; margin-bottom: 0.25rem; color: var(--text-primary); }
+        .paper-meta { font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem; font-family: 'Space Mono', monospace; }
+        .paper-desc { color: var(--text-secondary); font-size: 0.85rem; }
 
-        .paper-meta {
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-            margin-bottom: 0.5rem;
-        }
-
-        .paper-desc {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .typing-indicator {
-            display: none;
-        }
-
-        .typing-indicator span {
-            width: 6px;
-            height: 6px;
-            background: var(--text-tertiary);
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 4px;
-            animation: typing 1s infinite;
-        }
-
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1); }
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .chat-bubble { max-width: 90%; padding: 0.75rem 1rem; }
+            .demo-chat { padding: 0 1rem; min-height: auto; }
+            .chat-avatar { width: 32px; height: 32px; font-size: 0.7rem; }
         }
 
         /* 底部 */
@@ -560,49 +547,155 @@
                 <h2>实际效果</h2>
                 <p>看看 AI 助手如何帮你搜索和阅读论文</p>
             </div>
-            <div class="demo-chat">
-                <div class="chat-message user" style="animation-delay: 0s;">
-                    <div class="chat-avatar user-avatar">我</div>
-                    <div class="chat-bubble">最近 DeepSeek 的 mHC 论文讲的是啥？</div>
-                </div>
-                <div class="chat-message ai" style="animation-delay: 0.8s;">
-                    <div class="chat-avatar ai-avatar">AI</div>
-                    <div class="chat-bubble">
-                        <div class="typing-indicator">
-                            <span></span><span></span><span></span>
-                        </div>
-                        <div class="chat-content">
-                            正在搜索 arXiv 论文...
-                        </div>
-                    </div>
-                </div>
-                <div class="chat-message ai" style="animation-delay: 2s;">
-                    <div class="chat-avatar ai-avatar">AI</div>
-                    <div class="chat-bubble result-bubble">
-                        <div class="paper-result">
-                            <div class="paper-title">mHC: Manifold-Constrained Hyper-Connections</div>
-                            <div class="paper-meta">arXiv: 2512.24880 · DeepSeek-AI · 2025-12-31</div>
-                            <div class="paper-desc">提出了一种流形约束的超连接框架，解决了大规模训练的稳定性问题...</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="chat-message user" style="animation-delay: 3.5s;">
-                    <div class="chat-avatar user-avatar">我</div>
-                    <div class="chat-bubble">帮我读一下这篇论文的核心方法</div>
-                </div>
-                <div class="chat-message ai" style="animation-delay: 4.5s;">
-                    <div class="chat-avatar ai-avatar">AI</div>
-                    <div class="chat-bubble result-bubble">
-                        <div class="paper-result">
-                            <div class="paper-desc" style="font-size: 0.9rem; line-height: 1.6;">
-                                mHC 的核心是将超连接的残差矩阵投影到 <strong>Birkhoff 多面体</strong>上，利用 <strong>Sinkhorn-Knopp 算法</strong>使其成为双稳态随机矩阵。这确保了信号在多层传递中保持能量守恒，解决了梯度爆炸问题。
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="demo-chat" id="demoChat">
+                <!-- JS 动态生成内容 -->
             </div>
         </div>
     </section>
+
+    <script>
+        // 演示脚本数据
+        const demoScript = [
+            { type: 'user', text: '最近 DeepSeek 的 mHC 论文讲的是啥？' },
+            { type: 'status', text: '正在搜索 "DeepSeek mHC"...' },
+            { 
+                type: 'paper-card', 
+                title: 'mHC: Manifold-Constrained Hyper-Connections',
+                meta: 'arXiv: 2512.24880 · DeepSeek-AI · 2025-12-31',
+                desc: '提出了一种流形约束的超连接框架，解决了大规模训练的稳定性问题，同时保持了超连接的性能优势。'
+            },
+            { type: 'user', text: '帮我读一下这篇论文的核心方法' },
+            { type: 'status', text: '正在读取论文全文 (55k chars)...' },
+            { 
+                type: 'ai', 
+                text: 'mHC 的核心是将超连接的残差矩阵投影到 **Birkhoff 多面体**上。利用 **Sinkhorn-Knopp 算法**使其成为双稳态随机矩阵（Doubly Stochastic Matrix）。\n\n这确保了信号在多层传递中保持能量守恒，从根本上解决了梯度爆炸问题，让模型在扩展规模时更加稳定。' 
+            }
+        ];
+
+        const chatContainer = document.getElementById('demoChat');
+        let isPlaying = false;
+
+        async function playDemo() {
+            if (isPlaying) return;
+            isPlaying = true;
+            chatContainer.innerHTML = ''; // 清空
+
+            for (const step of demoScript) {
+                await new Promise(r => setTimeout(r, 800)); // 步骤间隔
+
+                if (step.type === 'status') {
+                    const loadingId = showLoading(step.text);
+                    await new Promise(r => setTimeout(r, 1500)); // 模拟耗时
+                    removeLoading(loadingId);
+                } else if (step.type === 'paper-card') {
+                    showPaperCard(step);
+                } else {
+                    await showMessage(step.type, step.text);
+                }
+            }
+
+            // 结束后等待一段重播
+            await new Promise(r => setTimeout(r, 5000));
+            isPlaying = false;
+            playDemo();
+        }
+
+        function showLoading(text) {
+            const id = 'loading-' + Date.now();
+            const html = `
+                <div class="chat-message ai" id="${id}">
+                    <div class="chat-avatar ai-avatar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20Z"/></svg>
+                    </div>
+                    <div class="chat-bubble status-bubble">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span style="margin-left:8px">${text}</span>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeLoading(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function showPaperCard(data) {
+            const html = `
+                <div class="chat-message ai fade-in">
+                    <div class="chat-avatar ai-avatar">AI</div>
+                    <div class="chat-bubble result-bubble">
+                        <div class="paper-result">
+                            <div class="paper-title">${data.title}</div>
+                            <div class="paper-meta">${data.meta}</div>
+                            <div class="paper-desc">${data.desc}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
+
+        async function showMessage(type, text) {
+            const isUser = type === 'user';
+            const avatar = isUser ? '我' : 'AI';
+            const avatarClass = isUser ? 'user-avatar' : 'ai-avatar';
+            const msgId = 'msg-' + Date.now();
+            
+            const html = `
+                <div class="chat-message ${type} fade-in">
+                    <div class="chat-avatar ${avatarClass}">${avatar}</div>
+                    <div class="chat-bubble" id="${msgId}"></div>
+                </div>
+            `;
+            chatContainer.insertAdjacentHTML('beforeend', html);
+            
+            // 打字机效果
+            const bubble = document.getElementById(msgId);
+            // 解析简单的 markdown 加粗
+            const parsedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            
+            // 简单模拟打字，实际渲染用 HTML
+            // 为了简单，直接显示全文字，或者用更复杂的逻辑逐字显示 HTML
+            // 这里我们采用：逐字显示纯文本，最后替换为格式化文本
+            
+            if (isUser) {
+                bubble.innerHTML = parsedText; // 用户消息直接显示
+            } else {
+                // AI 消息逐字显示
+                const plainText = text.replace(/\*\*/g, '');
+                for (let i = 0; i <= plainText.length; i++) {
+                    bubble.innerText = plainText.slice(0, i);
+                    scrollToBottom();
+                    await new Promise(r => setTimeout(r, 20)); // 打字速度
+                }
+                bubble.innerHTML = parsedText; // 渲染格式
+            }
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 启动演示
+        // 使用 IntersectionObserver 在元素进入视口时开始播放
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    playDemo();
+                }
+            });
+        }, { threshold: 0.3 });
+        
+        observer.observe(chatContainer);
+    </script>
 
     <!-- 获取 Key -->
     <section class="cta-section" id="get-key">
