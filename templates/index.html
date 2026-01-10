@@ -51,7 +51,8 @@
                 
                 <div class="mcp-info">
                     <h3>MCP 连接</h3>
-                    <code>http://localhost:8633/mcp</code>
+                    <code id="mcpUrl"></code>
+                    <script>document.getElementById('mcpUrl').textContent = window.location.origin + '/mcp';</script>
                 </div>
             </aside>
 
