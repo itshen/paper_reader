@@ -185,6 +185,12 @@ papers:
 1. 先删除超过 90 天的论文
 2. 然后删除最大的文件（直到总大小 < 1GB）
 
+## 赞赏
+
+如果这个项目对你有帮助，欢迎请作者喝杯咖啡 ☕
+
+<img src="static/image/sponsor.jpg" width="200" alt="赞赏码">
+
 ## License
 
 MIT License
