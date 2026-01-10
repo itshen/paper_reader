@@ -139,6 +139,17 @@
             background: var(--accent-secondary);
         }
         
+        .btn-small.btn-copy-config {
+            position: static;
+            background: var(--accent-success);
+            border: none;
+            color: white;
+        }
+        
+        .btn-small.btn-copy-config:hover {
+            filter: brightness(1.1);
+        }
+        
         .btn-delete {
             background: transparent;
             border: 1px solid var(--accent-danger);
@@ -331,21 +342,38 @@
             </div>
         </div>
         <script>
-            // 动态生成 MCP 配置
-            function updateMcpConfig() {
+            // 生成 MCP 配置 JSON
+            function generateMcpConfig(token = 'YOUR_TOKEN_HERE') {
                 const baseUrl = window.location.origin;
-                const config = {
+                return {
                     "mcpServers": {
                         "paper-reader": {
                             "url": baseUrl + "/mcp",
                             "headers": {
-                                "Authorization": "Bearer YOUR_TOKEN_HERE"
+                                "Authorization": "Bearer " + token
                             }
                         }
                     }
                 };
+            }
+            
+            // 更新页面显示的 MCP 配置
+            function updateMcpConfig(token) {
+                const config = generateMcpConfig(token);
                 document.getElementById('mcpConfig').textContent = JSON.stringify(config, null, 2);
             }
+            
+            // 复制指定 Token 的完整配置
+            function copyTokenConfig(token) {
+                const config = generateMcpConfig(token);
+                const configText = JSON.stringify(config, null, 2);
+                navigator.clipboard.writeText(configText).then(() => {
+                    showMessage('配置已复制到剪贴板', 'success');
+                }).catch(() => {
+                    showMessage('复制失败', 'error');
+                });
+            }
+            
             updateMcpConfig();
         </script>
         
@@ -386,6 +414,7 @@
                             </div>
                         </div>
                         <div class="token-actions">
+                            <button class="btn-small btn-copy-config" onclick="copyTokenConfig('${token.token_full}')">复制配置</button>
                             <button class="btn-small btn-copy" onclick="copyToken('${token.token_full}')">复制</button>
                             <button class="btn-small btn-delete" onclick="deleteToken(${token.id})">删除</button>
                         </div>
