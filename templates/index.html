@@ -627,14 +627,19 @@
     </section>
 
     <script>
-        // 演示脚本数据 - 模仿 Cherry Studio 真实调用流
+        // 演示脚本数据 - 自动播放流程
         const demoScript = [
             { type: 'user', text: '最近 DeepSeek 的 mHC 论文讲的是啥？' },
-            { type: 'tool', name: 'search_papers', args: 'query="DeepSeek mHC"' },
+            { type: 'tool', name: 'search_papers', args: 'query="DeepSeek mHC", sort_by="date"' },
+            { 
+                type: 'ai', 
+                text: '为您找到以下相关论文：\n\n**1. mHC: Manifold-Constrained Hyper-Connections**\n   *arXiv: 2512.24880 · 2025-12-31*\n   DeepSeek 团队提出的一种针对超连接架构的改进框架，解决了训练不稳定性。\n\n**2. mHC-GNN: Manifold-Constrained Hyper-Connections for GNN**\n   *arXiv: 2601.02451 · 2026-01-05*\n   将流形约束超连接应用于图神经网络。' 
+            },
+            { type: 'user', text: '帮我读一下第一篇的核心方法' },
             { type: 'tool', name: 'get_paper_content', args: 'id="2512.24880"' },
             { 
                 type: 'ai', 
-                text: 'DeepSeek 团队于 2025 年末发布的论文 **「mHC: Manifold-Constrained Hyper-Connections」**，提出了一种针对超连接（Hyper-Connections, HC）架构的改进框架。\n\n**核心解决问题：**\n1. **不稳定性**：原始 HC 在大规模训练中容易导致梯度爆炸。\n2. **内存墙**：超连接扩展了残差流宽度，导致 I/O 开销剧增。\n\n**核心方法：**\n利用 **Sinkhorn-Knopp 算法**将残差矩阵投影到 Birkhoff 多面体上，强制其成为**双稳态随机矩阵**。这确保了信号在多层传递中保持能量守恒。' 
+                text: '根据论文 **mHC (2512.24880)** 的全文内容：\n\n**核心方法：**\nmHC 利用 **Sinkhorn-Knopp 算法**将超连接的残差矩阵投影到 **Birkhoff 多面体**上，强制其成为**双稳态随机矩阵**（Doubly Stochastic Matrix）。\n\n**作用：**\n这种约束确保了残差流在多层传递中保持**能量守恒**（Feature Mean Conservation），从根本上解决了原始 Hyper-Connections 导致的梯度爆炸问题，同时保持了模型的性能优势。' 
             }
         ];
 
@@ -650,12 +655,12 @@
                 if (step.type === 'tool') {
                     // 工具调用展示：先显示运行中，后变为完成
                     const toolId = await showToolCall(step.name, step.args);
-                    await new Promise(r => setTimeout(r, 1200)); // 模拟网络延迟
+                    await new Promise(r => setTimeout(r, 1000)); // 模拟网络延迟
                     finishToolCall(toolId);
-                    await new Promise(r => setTimeout(r, 300));
+                    await new Promise(r => setTimeout(r, 400));
                 } else {
                     await showMessage(step.type, step.text);
-                    await new Promise(r => setTimeout(r, 800)); // 阅读时间
+                    await new Promise(r => setTimeout(r, 1000)); // 阅读时间
                 }
             }
         }
