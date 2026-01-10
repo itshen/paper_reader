@@ -328,6 +328,134 @@
             font-weight: bold;
         }
 
+        /* 对话演示 */
+        .demo-section {
+            padding: 5rem 0;
+            background: var(--bg-subtle);
+            border-top: 1px solid var(--border);
+        }
+
+        .demo-chat {
+            max-width: 700px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 0.75rem;
+            opacity: 0;
+            animation: fadeSlideIn 0.5s ease forwards;
+        }
+
+        .chat-message.user { justify-content: flex-end; }
+        .chat-message.ai { justify-content: flex-start; }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: var(--accent);
+            color: white;
+            order: 2;
+        }
+
+        .ai-avatar {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .chat-bubble {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 0.875rem 1.25rem;
+            max-width: 80%;
+            font-size: 0.95rem;
+        }
+
+        .chat-message.user .chat-bubble {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 16px 16px 4px 16px;
+        }
+
+        .chat-message.ai .chat-bubble {
+            border-radius: 16px 16px 16px 4px;
+        }
+
+        .result-bubble {
+            padding: 1rem;
+        }
+
+        .paper-result {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .paper-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--accent);
+        }
+
+        .paper-meta {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-bottom: 0.5rem;
+        }
+
+        .paper-desc {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .typing-indicator {
+            display: none;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+            animation: typing 1s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
         /* 底部 */
         footer {
             padding: 3rem 0;
@@ -382,8 +510,8 @@
             </p>
             <div class="hero-btns">
                 <a href="#get-key" class="btn btn-primary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 13A4.5 4.5 0 1 1 7.5 4A4.5 4.5 0 0 1 7.5 13ZM7.5 11A2.5 2.5 0 1 0 7.5 6A2.5 2.5 0 0 0 7.5 11ZM22 19V21H2V19L10.5 12.3529C8.69176 11.6918 7.35661 10.0353 7.05476 8.08183C6.4468 8.02759 5.8239 8 5.19615 8L4.80385 8C4.19565 8 3.59345 8.02581 3 8.07548V6.06456C3.5855 6.02187 4.18042 6 4.78462 6H5.21538C5.8398 6 6.4529 6.02324 7.05476 6.06899C7.45277 3.65992 9.47976 1.83823 11.9808 1.54344C15.1992 1.16413 18.0665 3.52229 18.4237 6.64939C18.6657 8.76798 17.653 10.6698 16.0963 11.8546L22 19ZM20 12V6H22V12H20Z"/></svg>
-                    获取 API Key
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10H20L11 23V14H4L13 1V10Z"/></svg>
+                    立即使用
                 </a>
                 <a href="https://github.com/itshen/paper_reader" target="_blank" class="btn btn-outline">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.475 2 2 6.475 2 12C2 16.425 4.8625 20.1625 8.8375 21.4875C9.3375 21.575 9.525 21.275 9.525 21.0125C9.525 20.775 9.5125 19.9875 9.5125 19.15C7 19.6125 6.35 18.5375 6.15 17.975C6.0375 17.6875 5.55 16.8 5.125 16.5625C4.775 16.375 4.275 15.9125 5.1125 15.9C5.9 15.8875 6.4625 16.625 6.65 16.925C7.55 18.4375 8.9875 18.0125 9.5625 17.75C9.65 17.1 9.9125 16.6625 10.2 16.4125C7.975 16.1625 5.65 15.3 5.65 11.475C5.65 10.3875 6.0375 9.4875 6.675 8.7875C6.575 8.5375 6.225 7.5125 6.775 6.1375C6.775 6.1375 7.6125 5.875 9.525 7.1625C10.325 6.9375 11.175 6.825 12.025 6.825C12.875 6.825 13.725 6.9375 14.525 7.1625C16.4375 5.8625 17.275 6.1375 17.275 6.1375C17.825 7.5125 17.475 8.5375 17.375 8.7875C18.0125 9.4875 18.4 10.375 18.4 11.475C18.4 15.3125 16.0625 16.1625 13.8375 16.4125C14.2 16.725 14.5125 17.325 14.5125 18.2625C14.5125 19.6 14.5 20.675 14.5 21.0125C14.5 21.275 14.6875 21.5875 15.1875 21.4875C19.1375 20.1625 22 16.4125 22 12C22 6.475 17.525 2 12 2Z"/></svg>
@@ -420,6 +548,57 @@
                     </div>
                     <h3>智能缓存</h3>
                     <p>内置 LRU 缓存系统。自动缓存已下载的论文，避免重复下载，极大提升响应速度。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 对话演示 -->
+    <section class="demo-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>实际效果</h2>
+                <p>看看 AI 助手如何帮你搜索和阅读论文</p>
+            </div>
+            <div class="demo-chat">
+                <div class="chat-message user" style="animation-delay: 0s;">
+                    <div class="chat-avatar user-avatar">我</div>
+                    <div class="chat-bubble">最近 DeepSeek 的 mHC 论文讲的是啥？</div>
+                </div>
+                <div class="chat-message ai" style="animation-delay: 0.8s;">
+                    <div class="chat-avatar ai-avatar">AI</div>
+                    <div class="chat-bubble">
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div class="chat-content">
+                            正在搜索 arXiv 论文...
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-message ai" style="animation-delay: 2s;">
+                    <div class="chat-avatar ai-avatar">AI</div>
+                    <div class="chat-bubble result-bubble">
+                        <div class="paper-result">
+                            <div class="paper-title">mHC: Manifold-Constrained Hyper-Connections</div>
+                            <div class="paper-meta">arXiv: 2512.24880 · DeepSeek-AI · 2025-12-31</div>
+                            <div class="paper-desc">提出了一种流形约束的超连接框架，解决了大规模训练的稳定性问题...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-message user" style="animation-delay: 3.5s;">
+                    <div class="chat-avatar user-avatar">我</div>
+                    <div class="chat-bubble">帮我读一下这篇论文的核心方法</div>
+                </div>
+                <div class="chat-message ai" style="animation-delay: 4.5s;">
+                    <div class="chat-avatar ai-avatar">AI</div>
+                    <div class="chat-bubble result-bubble">
+                        <div class="paper-result">
+                            <div class="paper-desc" style="font-size: 0.9rem; line-height: 1.6;">
+                                mHC 的核心是将超连接的残差矩阵投影到 <strong>Birkhoff 多面体</strong>上，利用 <strong>Sinkhorn-Knopp 算法</strong>使其成为双稳态随机矩阵。这确保了信号在多层传递中保持能量守恒，解决了梯度爆炸问题。
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
