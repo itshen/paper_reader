@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理 - Time & Calculator MCP</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-secondary);
+            padding: 20px 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .admin-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .back-link {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .back-link:hover {
+            color: var(--accent-primary);
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .logout-btn:hover {
+            border-color: var(--accent-danger);
+            color: var(--accent-danger);
+        }
+        
+        .admin-section {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .admin-section h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+        
+        .section-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .token-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .token-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+        
+        .token-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .token-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        
+        .token-value {
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-primary);
+        }
+        
+        .token-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        .token-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+        }
+        
+        .btn-copy {
+            background: var(--accent-primary);
+            border: none;
+            color: white;
+        }
+        
+        .btn-copy:hover {
+            background: var(--accent-secondary);
+        }
+        
+        .btn-delete {
+            background: transparent;
+            border: 1px solid var(--accent-danger);
+            color: var(--accent-danger);
+        }
+        
+        .btn-delete:hover {
+            background: var(--accent-danger);
+            color: white;
+        }
+        
+        .create-token {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .create-token input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .create-token input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .btn-create {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        
+        .btn-create:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .password-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-width: 360px;
+        }
+        
+        .password-form input {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .password-form input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .btn-save {
+            padding: 10px 20px;
+            background: var(--accent-success);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            align-self: flex-start;
+            transition: all 0.15s;
+        }
+        
+        .btn-save:hover {
+            opacity: 0.9;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        .message.success {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--accent-success);
+            display: block;
+        }
+        
+        .message.error {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--accent-danger);
+            display: block;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .mcp-config {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .btn-copy-config {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 6px 14px;
+            background: var(--accent-primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .btn-copy-config:hover {
+            background: var(--accent-secondary);
+        }
+        
+        .btn-copy-config.copied {
+            background: var(--accent-success);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="admin-header">
+            <h1>⚙️ 管理设置</h1>
+            <div class="header-actions">
+                <a href="/" class="back-link">← 首页</a>
+                <a href="/logs" class="back-link">📊 日志</a>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+        
+        <div id="message" class="message"></div>
+        
+        <!-- API Token 管理 -->
+        <div class="admin-section">
+            <h2>🔑 API Token 管理</h2>
+            <p class="section-desc">创建 Token 供 MCP 客户端（如 Cursor、Claude Desktop）使用</p>
+            
+            <div class="token-list" id="tokenList">
+                <div class="empty-state">加载中...</div>
+            </div>
+            
+            <div class="create-token">
+                <input type="text" id="tokenName" placeholder="Token 名称（如：Cursor）">
+                <button class="btn-create" onclick="createToken()">创建 Token</button>
+            </div>
+        </div>
+        
+        <!-- MCP 配置示例 -->
+        <div class="admin-section">
+            <h2>📋 MCP 客户端配置</h2>
+            <p class="section-desc">复制以下配置到 Cursor / Claude Desktop 的 MCP 设置中</p>
+            <div style="position: relative;">
+                <pre class="mcp-config" id="mcpConfig">{
+  "mcpServers": {
+    "time-calc": {
+      "url": "http://localhost:8765/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN_HERE"
+      }
+    }
+  }
+}</pre>
+                <button class="btn-copy-config" onclick="copyConfig()">复制配置</button>
+            </div>
+        </div>
+        
+        <!-- 修改密码 -->
+        <div class="admin-section">
+            <h2>🔒 修改密码</h2>
+            <form class="password-form" id="passwordForm">
+                <input type="password" id="newPassword" placeholder="新密码" required>
+                <input type="password" id="confirmPassword" placeholder="确认密码" required>
+                <button type="submit" class="btn-save">保存密码</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 加载 Token 列表
+        async function loadTokens() {
+            try {
+                const response = await fetch('/api/tokens');
+                const data = await response.json();
+                
+                const list = document.getElementById('tokenList');
+                
+                if (!data.tokens || data.tokens.length === 0) {
+                    list.innerHTML = '<div class="empty-state">暂无 Token，请创建一个</div>';
+                    return;
+                }
+                
+                list.innerHTML = data.tokens.map(token => `
+                    <div class="token-item">
+                        <div class="token-info">
+                            <div class="token-name">${token.name}</div>
+                            <div class="token-value">${token.token}</div>
+                            <div class="token-meta">
+                                创建于: ${token.created_at || '-'} | 
+                                最后使用: ${token.last_used || '从未使用'}
+                                ${!token.is_active ? ' | <span style="color:var(--accent-danger)">已禁用</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="token-actions">
+                            <button class="btn-small btn-copy" onclick="copyToken('${token.token_full}')">复制</button>
+                            <button class="btn-small btn-delete" onclick="deleteToken(${token.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载 Token 失败:', error);
+            }
+        }
+        
+        // 创建 Token
+        async function createToken() {
+            const name = document.getElementById('tokenName').value.trim();
+            if (!name) {
+                showMessage('请输入 Token 名称', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`Token 已创建，请复制保存`, 'success');
+                    document.getElementById('tokenName').value = '';
+                    loadTokens();
+                    updateMcpConfig(data.token);
+                } else {
+                    showMessage(data.error || '创建失败', 'error');
+                }
+            } catch (error) {
+                showMessage('创建失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 删除 Token
+        async function deleteToken(id) {
+            if (!confirm('确定要删除这个 Token 吗？')) return;
+            
+            try {
+                const response = await fetch(`/api/tokens/${id}`, { method: 'DELETE' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Token 已删除', 'success');
+                    loadTokens();
+                } else {
+                    showMessage(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showMessage('删除失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 复制 Token
+        function copyToken(token) {
+            navigator.clipboard.writeText(token).then(() => {
+                showMessage('Token 已复制到剪贴板', 'success');
+            });
+        }
+        
+        // 更新 MCP 配置示例
+        function updateMcpConfig(token) {
+            const config = {
+                mcpServers: {
+                    "time-calc": {
+                        url: `http://localhost:${window.location.port || 8765}/mcp`,
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                }
+            };
+            document.getElementById('mcpConfig').textContent = JSON.stringify(config, null, 2);
+        }
+        
+        // 复制配置
+        function copyConfig() {
+            const configText = document.getElementById('mcpConfig').textContent;
+            const btn = document.querySelector('.btn-copy-config');
+            
+            navigator.clipboard.writeText(configText).then(() => {
+                btn.textContent = '已复制';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = '复制配置';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+        
+        // 修改密码
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showMessage('两次密码输入不一致', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showMessage('密码长度至少 6 位', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_password: newPassword })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('密码修改成功', 'success');
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    showMessage(data.error || '修改失败', 'error');
+                }
+            } catch (error) {
+                showMessage('修改失败: ' + error.message, 'error');
+            }
+        });
+        
+        // 退出登录
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+        
+        // 显示消息
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+            
+            setTimeout(() => { msg.className = 'message'; }, 5000);
+        }
+        
+        // 初始化
+        loadTokens();
+    </script>
+</body>
+</html>

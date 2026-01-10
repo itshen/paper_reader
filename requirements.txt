@@ -1,0 +1,24 @@
+# MCP 服务器 - 论文搜索与阅读
+# Copyright (c) 2025 Miyang Tech (Zhuhai Hengqin) Co., Ltd.
+# MIT License
+
+# MCP 框架
+mcp>=1.0.0
+
+# Web 服务
+fastapi>=0.104.0
+uvicorn>=0.24.0
+jinja2>=3.1.0
+
+# 配置文件
+pyyaml>=6.0
+
+# 环境变量
+python-dotenv>=1.0.0
+
+# 论文搜索
+arxiv>=2.1.0
+
+# PDF 转 Markdown
+markitdown>=0.0.1a2
+pymupdf>=1.24.0

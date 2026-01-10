@@ -1,0 +1,23 @@
+# MCP 服务器配置文件 - 论文搜索与阅读
+# Copyright (c) 2025 Miyang Tech (Zhuhai Hengqin) Co., Ltd.
+# MIT License
+
+# 服务器配置
+server:
+  name: "Paper Reader MCP"
+  host: "0.0.0.0"
+  port: 8633
+
+# 认证配置
+auth:
+  default_password: "admin123"    # 默认密码，建议登录后修改
+  salt: "mcp_template_salt_change_me"  # 密码加盐，建议修改
+
+# 存储配置
+storage:
+  data_dir: "./data"
+
+# 论文缓存配置
+papers:
+  max_size_mb: 1024      # 最大缓存大小 (MB)，默认 1GB
+  max_age_days: 90       # 最大保留天数，默认 3 个月

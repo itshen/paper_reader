@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP 日志 - Time & Calculator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>MCP 日志</h1>
+                    <p class="subtitle">查看所有 API 和 MCP 请求记录</p>
+                </div>
+                <div class="header-actions">
+                    <a href="/" class="btn btn-secondary">工具测试</a>
+                    <a href="/admin" class="btn btn-secondary">管理</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">-</div>
+                <div class="stat-label">总请求</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-24h">-</div>
+                <div class="stat-label">24小时</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-api">-</div>
+                <div class="stat-label">Web API</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-mcp">-</div>
+                <div class="stat-label">MCP</div>
+            </div>
+            <div class="stat-card stat-error">
+                <div class="stat-value" id="stat-errors">-</div>
+                <div class="stat-label">错误</div>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="logs-filters">
+            <div class="filter-group">
+                <select id="filter-type" onchange="loadLogs()">
+                    <option value="">全部类型</option>
+                    <option value="api">Web API</option>
+                    <option value="mcp">MCP</option>
+                </select>
+                <select id="filter-method" onchange="loadLogs()">
+                    <option value="">全部方法</option>
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+                <input type="text" id="filter-path" placeholder="路径搜索..." onkeyup="debounceSearch()">
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-secondary" onclick="loadLogs()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    刷新
+                </button>
+                <button class="btn btn-danger" onclick="clearLogs()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    清空
+                </button>
+            </div>
+        </div>
+
+        <!-- 日志表格 -->
+        <div class="logs-table-wrapper">
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px">类型</th>
+                        <th style="width: 70px">方法</th>
+                        <th>路径</th>
+                        <th style="width: 60px">状态</th>
+                        <th style="width: 70px">耗时</th>
+                        <th style="width: 140px">时间</th>
+                        <th style="width: 50px"></th>
+                    </tr>
+                </thead>
+                <tbody id="logs-body">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">加载中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="logs-pagination">
+            <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="prevPage()" disabled>上一页</button>
+            <span id="pagination-info">第 1 页</span>
+            <button class="btn btn-secondary btn-sm" id="btn-next" onclick="nextPage()">下一页</button>
+        </div>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            <p>© 2025 Miyang Tech (Zhuhai Hengqin) Co., Ltd.</p>
+        </footer>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="modal" id="log-modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="modal-title">日志详情</h3>
+                <button class="btn-close" onclick="document.getElementById('log-modal').style.display='none'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let currentPage = 1;
+    const pageSize = 50;
+    let searchTimeout = null;
+
+    async function loadLogs() {
+        const type = document.getElementById('filter-type').value;
+        const method = document.getElementById('filter-method').value;
+        const path = document.getElementById('filter-path').value;
+        
+        const offset = (currentPage - 1) * pageSize;
+        let url = `/api/logs?limit=${pageSize}&offset=${offset}`;
+        
+        if (type) url += `&type=${type}`;
+        if (method) url += `&method=${method}`;
+        if (path) url += `&path=${encodeURIComponent(path)}`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderStats(data.stats);
+                renderLogs(data.logs);
+                updatePagination(data.logs.length);
+            }
+        } catch (error) {
+            console.error('加载日志失败:', error);
+        }
+    }
+
+    function renderStats(stats) {
+        document.getElementById('stat-total').textContent = stats.total || 0;
+        document.getElementById('stat-24h').textContent = stats.last_24h || 0;
+        document.getElementById('stat-api').textContent = stats.by_type?.api || 0;
+        document.getElementById('stat-mcp').textContent = stats.by_type?.mcp || 0;
+        document.getElementById('stat-errors').textContent = stats.errors || 0;
+    }
+
+    function renderLogs(logs) {
+        const tbody = document.getElementById('logs-body');
+        
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">暂无日志</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = logs.map(log => {
+            const time = new Date(log.timestamp);
+            const timeStr = time.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const isError = log.response_status >= 400 || log.error;
+            const methodClass = log.method.toLowerCase();
+            const typeClass = log.type;
+            
+            return `
+                <tr class="${isError ? 'error-row' : ''}" onclick="showLogDetail(${log.id})">
+                    <td><span class="log-type ${typeClass}">${log.type.toUpperCase()}</span></td>
+                    <td><span class="log-method ${methodClass}">${log.method}</span></td>
+                    <td class="log-path" title="${log.path}">${log.title || log.path}</td>
+                    <td><span class="log-status ${isError ? 'error' : 'success'}">${log.response_status || '-'}</span></td>
+                    <td class="log-duration">${log.duration_ms || 0}ms</td>
+                    <td class="log-time">${timeStr}</td>
+                    <td>
+                        <button class="btn-icon" title="查看详情">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function showLogDetail(logId) {
+        try {
+            const response = await fetch(`/api/logs/${logId}`);
+            const data = await response.json();
+            
+            if (!data.success) return;
+            
+            const log = data.log;
+            const time = new Date(log.timestamp);
+            
+            document.getElementById('modal-title').innerHTML = `
+                <span class="log-method ${log.method.toLowerCase()}">${log.method}</span>
+                ${log.path}
+            `;
+            
+            document.getElementById('modal-body').innerHTML = `
+                <div class="log-detail-section">
+                    <h4>基本信息</h4>
+                    <div class="log-detail-grid">
+                        <div class="detail-item">
+                            <span class="label">时间</span>
+                            <span class="value">${time.toLocaleString('zh-CN')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">类型</span>
+                            <span class="value">${log.type.toUpperCase()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">状态</span>
+                            <span class="value log-status ${log.response_status >= 400 ? 'error' : 'success'}">${log.response_status || '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">耗时</span>
+                            <span class="value">${log.duration_ms || 0}ms</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">客户端 IP</span>
+                            <span class="value">${log.client_ip || '-'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">User Agent</span>
+                            <span class="value text-truncate" title="${log.user_agent || ''}">${log.user_agent || '-'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                ${log.request_headers ? `
+                <div class="log-detail-section">
+                    <h4>请求头</h4>
+                    <pre class="log-code">${JSON.stringify(log.request_headers, null, 2)}</pre>
+                </div>
+                ` : ''}
+                
+                ${log.request_body ? `
+                <div class="log-detail-section">
+                    <h4>请求体</h4>
+                    <pre class="log-code">${JSON.stringify(log.request_body, null, 2)}</pre>
+                </div>
+                ` : ''}
+                
+                <div class="log-detail-section">
+                    <h4>响应</h4>
+                    <pre class="log-code">${JSON.stringify(log.response_body, null, 2)}</pre>
+                </div>
+                
+                ${log.error ? `
+                <div class="log-detail-section log-error-section">
+                    <h4>错误信息</h4>
+                    <pre class="log-code log-error">${log.error}</pre>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('log-modal').style.display = 'flex';
+        } catch (error) {
+            console.error('加载日志详情失败:', error);
+        }
+    }
+
+    function closeModal(event) {
+        if (event.target === event.currentTarget) {
+            document.getElementById('log-modal').style.display = 'none';
+        }
+    }
+
+    function updatePagination(count) {
+        document.getElementById('pagination-info').textContent = `第 ${currentPage} 页`;
+        document.getElementById('btn-prev').disabled = currentPage <= 1;
+        document.getElementById('btn-next').disabled = count < pageSize;
+    }
+
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadLogs();
+        }
+    }
+
+    function nextPage() {
+        currentPage++;
+        loadLogs();
+    }
+
+    function debounceSearch() {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentPage = 1;
+            loadLogs();
+        }, 300);
+    }
+
+    async function clearLogs() {
+        if (!confirm('确定要清空所有日志吗？此操作不可恢复。')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/logs', { method: 'DELETE' });
+            const data = await response.json();
+            if (data.success) {
+                currentPage = 1;
+                loadLogs();
+                alert('日志已清空');
+            }
+        } catch (error) {
+            console.error('清空日志失败:', error);
+        }
+    }
+
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', function() {
+        loadLogs();
+        setInterval(loadLogs, 30000);
+    });
+    </script>
+</body>
+</html>
