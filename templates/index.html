@@ -448,7 +448,13 @@
             </a>
             <div class="nav-links">
                 <a href="https://github.com/itshen/paper_reader" target="_blank">GitHub</a>
+                {% if is_logged_in %}
+                <a href="/test">工具测试</a>
+                <a href="/logs">日志</a>
+                <a href="/admin" class="nav-btn">管理</a>
+                {% else %}
                 <a href="https://github.com/itshen/paper_reader#readme" target="_blank" class="nav-btn">自行部署</a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -462,7 +468,7 @@
             <h1>让 AI 助手<br><span class="highlight">阅读学术论文</span></h1>
             <p class="hero-desc">
                 基于 MCP 协议的 arXiv 论文搜索与阅读服务，
-                让 Claude、Cursor 等 AI 助手直接搜索和阅读学术论文
+                让 Claude、Cursor、Cherry Studio 等 AI 助手直接搜索和阅读学术论文
             </p>
             <div class="hero-actions">
                 <a href="https://github.com/itshen/paper_reader" target="_blank" class="btn btn-primary">
@@ -559,6 +565,21 @@ python server.py</pre>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 获取 Key -->
+    <section class="features" style="padding-top: 0;">
+        <div class="section-header">
+            <h2>获取 API Key</h2>
+            <p>关注「洛小山」公众号，回复「论文」获取免费 API Key</p>
+        </div>
+        <div style="display: flex; justify-content: center;">
+            <div class="feature-card" style="max-width: 400px; text-align: center;">
+                <img src="/static/image/wechat_qr.jpg" alt="洛小山公众号" style="width: 200px; border-radius: 12px; margin-bottom: 1rem;">
+                <h3>扫码关注公众号</h3>
+                <p>回复「论文」获取 API Key，即可在 Cherry Studio、Cursor 等客户端中使用本服务</p>
             </div>
         </div>
     </section>

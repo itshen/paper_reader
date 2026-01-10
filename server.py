@@ -765,9 +765,8 @@ def run_server():
     @app.get("/")
     async def index(request: Request):
         """首页"""
-        if not check_auth(request):
-            return RedirectResponse(url="/login", status_code=302)
-        return templates.TemplateResponse("index.html", {"request": request})
+        is_logged_in = check_auth(request)
+        return templates.TemplateResponse("index.html", {"request": request, "is_logged_in": is_logged_in})
     
     @app.get("/test")
     async def test_page(request: Request):
