@@ -677,9 +677,9 @@ def run_server():
         method = request.method
         log_type = "mcp" if path == "/mcp" else "api"
         
-        # 获取请求体
+        # 获取请求体（API 和 MCP 请求都记录）
         request_body = None
-        if method in ["POST", "PUT", "PATCH"] and log_type == "api":
+        if method in ["POST", "PUT", "PATCH"]:
             try:
                 body = await request.body()
                 if body:
