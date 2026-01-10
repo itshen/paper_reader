@@ -330,117 +330,160 @@
 
         /* 对话演示 */
         .demo-section {
-            padding: 5rem 0;
-            background: var(--bg-subtle);
-            border-top: 1px solid var(--border);
+            padding: 6rem 0;
+            background: linear-gradient(to bottom, var(--bg-page), var(--bg-subtle));
+            /* 移除生硬的 border-top */
         }
 
         .demo-chat {
-            max-width: 700px;
+            max-width: 800px;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            min-height: 400px; /* 固定高度防止抖动 */
-            max-height: 600px;
-            overflow-y: hidden; /* 自动滚动 */
+            gap: 1.5rem;
+            /* 移除固定高度和 overflow，让内容自然展开 */
             padding-bottom: 2rem;
         }
 
         .chat-message {
             display: flex;
-            gap: 0.75rem;
+            gap: 1rem;
             width: 100%;
-        }
-        
-        .chat-message.fade-in {
-            animation: fadeSlideIn 0.4s ease forwards;
+            opacity: 0;
+            animation: fadeSlideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
         .chat-message.user { justify-content: flex-end; }
-        .chat-message.ai { justify-content: flex-start; }
+        
+        .chat-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 85%;
+            align-items: flex-start;
+        }
+        
+        .chat-message.user .chat-content-wrapper {
+            align-items: flex-end;
+        }
 
         @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .chat-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px; /* 方形圆角更像工具 */
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.75rem;
             font-weight: 600;
             flex-shrink: 0;
+            margin-top: 4px;
         }
 
         .user-avatar { background: var(--accent); color: white; order: 2; }
-        .ai-avatar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .ai-avatar { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border);
+            color: var(--accent); 
+        }
+        .ai-avatar svg { width: 20px; height: 20px; }
 
         .chat-bubble {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 0.875rem 1.25rem;
-            max-width: 85%;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
             font-size: 0.95rem;
-            line-height: 1.6;
+            line-height: 1.7;
             box-shadow: var(--shadow-sm);
+            color: var(--text-primary);
         }
 
         .chat-message.user .chat-bubble {
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 16px 16px 4px 16px;
+            border-radius: 12px 12px 2px 12px;
         }
 
-        .chat-message.ai .chat-bubble { border-radius: 16px 16px 16px 4px; }
+        .chat-message.ai .chat-bubble { 
+            border-radius: 2px 12px 12px 12px; 
+        }
 
-        .status-bubble {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+        /* 工具调用样式 - 模仿 Cherry Studio */
+        .tool-call {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
             display: flex;
             align-items: center;
-            padding: 0.5rem 1rem;
+            justify-content: space-between;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            width: 100%;
+            box-shadow: var(--shadow-sm);
+            opacity: 0;
+            animation: fadeSlideIn 0.4s ease forwards;
         }
 
-        .typing-dot {
-            width: 4px;
-            height: 4px;
-            background: var(--text-tertiary);
+        .tool-call-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tool-icon {
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .tool-args {
+            color: var(--text-tertiary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .tool-status {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+        }
+        
+        .status-running { color: var(--accent); }
+        .status-done { color: var(--success); }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--accent-light);
+            border-top-color: var(--accent);
             border-radius: 50%;
-            display: inline-block;
-            margin-right: 2px;
-            animation: typing 1s infinite;
-        }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typing {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1); }
+            animation: spin 1s linear infinite;
         }
 
-        .paper-result {
-            background: var(--bg-subtle);
-            border-radius: 8px;
-            padding: 1rem;
-            border-left: 3px solid var(--accent);
-        }
-
-        .paper-title { font-weight: 700; margin-bottom: 0.25rem; color: var(--text-primary); }
-        .paper-meta { font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 0.5rem; font-family: 'Space Mono', monospace; }
-        .paper-desc { color: var(--text-secondary); font-size: 0.85rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* 移动端适配 */
         @media (max-width: 768px) {
-            .chat-bubble { max-width: 90%; padding: 0.75rem 1rem; }
-            .demo-chat { padding: 0 1rem; min-height: auto; }
-            .chat-avatar { width: 32px; height: 32px; font-size: 0.7rem; }
+            .chat-content-wrapper { max-width: 100%; }
+            .tool-args { display: none; }
+            .demo-section { padding: 3rem 0; }
         }
 
         /* 底部 */
@@ -554,141 +597,148 @@
     </section>
 
     <script>
-        // 演示脚本数据
+        // 演示脚本数据 - 模仿 Cherry Studio 真实调用流
         const demoScript = [
             { type: 'user', text: '最近 DeepSeek 的 mHC 论文讲的是啥？' },
-            { type: 'status', text: '正在搜索 "DeepSeek mHC"...' },
-            { 
-                type: 'paper-card', 
-                title: 'mHC: Manifold-Constrained Hyper-Connections',
-                meta: 'arXiv: 2512.24880 · DeepSeek-AI · 2025-12-31',
-                desc: '提出了一种流形约束的超连接框架，解决了大规模训练的稳定性问题，同时保持了超连接的性能优势。'
-            },
-            { type: 'user', text: '帮我读一下这篇论文的核心方法' },
-            { type: 'status', text: '正在读取论文全文 (55k chars)...' },
+            { type: 'tool', name: 'search_papers', args: 'query="DeepSeek mHC"' },
+            { type: 'tool', name: 'get_paper_content', args: 'id="2512.24880"' },
             { 
                 type: 'ai', 
-                text: 'mHC 的核心是将超连接的残差矩阵投影到 **Birkhoff 多面体**上。利用 **Sinkhorn-Knopp 算法**使其成为双稳态随机矩阵（Doubly Stochastic Matrix）。\n\n这确保了信号在多层传递中保持能量守恒，从根本上解决了梯度爆炸问题，让模型在扩展规模时更加稳定。' 
+                text: 'DeepSeek 团队于 2025 年末发布的论文 **「mHC: Manifold-Constrained Hyper-Connections」**，提出了一种针对超连接（Hyper-Connections, HC）架构的改进框架。\n\n**核心解决问题：**\n1. **不稳定性**：原始 HC 在大规模训练中容易导致梯度爆炸。\n2. **内存墙**：超连接扩展了残差流宽度，导致 I/O 开销剧增。\n\n**核心方法：**\n利用 **Sinkhorn-Knopp 算法**将残差矩阵投影到 Birkhoff 多面体上，强制其成为**双稳态随机矩阵**。这确保了信号在多层传递中保持能量守恒。' 
             }
         ];
 
         const chatContainer = document.getElementById('demoChat');
-        let isPlaying = false;
+        let hasPlayed = false;
 
         async function playDemo() {
-            if (isPlaying) return;
-            isPlaying = true;
+            if (hasPlayed) return;
+            hasPlayed = true;
             chatContainer.innerHTML = ''; // 清空
 
             for (const step of demoScript) {
-                await new Promise(r => setTimeout(r, 800)); // 步骤间隔
-
-                if (step.type === 'status') {
-                    const loadingId = showLoading(step.text);
-                    await new Promise(r => setTimeout(r, 1500)); // 模拟耗时
-                    removeLoading(loadingId);
-                } else if (step.type === 'paper-card') {
-                    showPaperCard(step);
+                if (step.type === 'tool') {
+                    // 工具调用展示：先显示运行中，后变为完成
+                    const toolId = await showToolCall(step.name, step.args);
+                    await new Promise(r => setTimeout(r, 1200)); // 模拟网络延迟
+                    finishToolCall(toolId);
+                    await new Promise(r => setTimeout(r, 300));
                 } else {
                     await showMessage(step.type, step.text);
+                    await new Promise(r => setTimeout(r, 800)); // 阅读时间
                 }
             }
-
-            // 结束后等待一段重播
-            await new Promise(r => setTimeout(r, 5000));
-            isPlaying = false;
-            playDemo();
         }
 
-        function showLoading(text) {
-            const id = 'loading-' + Date.now();
+        async function showToolCall(name, args) {
+            const id = 'tool-' + Date.now();
             const html = `
                 <div class="chat-message ai" id="${id}">
                     <div class="chat-avatar ai-avatar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 4H7C5.89543 4 5 4.89543 5 6C5 7.10457 5.89543 8 7 8H21V21C21 21.5523 20.5523 22 20 22H7C4.79086 22 3 20.2091 3 18V6C3 3.79086 4.79086 2 7 2H20C20.5523 2 21 2.44772 21 3V4ZM5 18C5 19.1046 5.89543 20 7 20H19V10H7C6.27143 10 5.58835 9.80521 5 9.46487V18ZM20 7H7C6.44772 7 6 6.55228 6 6C6 5.44772 6.44772 5 7 5H20V7Z"/></svg>
                     </div>
-                    <div class="chat-bubble status-bubble">
-                        <span class="typing-dot"></span>
-                        <span class="typing-dot"></span>
-                        <span class="typing-dot"></span>
-                        <span style="margin-left:8px">${text}</span>
-                    </div>
-                </div>
-            `;
-            chatContainer.insertAdjacentHTML('beforeend', html);
-            scrollToBottom();
-            return id;
-        }
-
-        function removeLoading(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        }
-
-        function showPaperCard(data) {
-            const html = `
-                <div class="chat-message ai fade-in">
-                    <div class="chat-avatar ai-avatar">AI</div>
-                    <div class="chat-bubble result-bubble">
-                        <div class="paper-result">
-                            <div class="paper-title">${data.title}</div>
-                            <div class="paper-meta">${data.meta}</div>
-                            <div class="paper-desc">${data.desc}</div>
+                    <div class="chat-content-wrapper">
+                        <div class="tool-call">
+                            <div class="tool-call-left">
+                                <div class="tool-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 10H20L11 23V14H4L13 1V10Z"/></svg>
+                                </div>
+                                <span class="tool-name">${name}</span>
+                                <span class="tool-args">(${args})</span>
+                            </div>
+                            <div class="tool-status status-running">
+                                <div class="spinner"></div>
+                                <span>Running</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
             chatContainer.insertAdjacentHTML('beforeend', html);
-            scrollToBottom();
+            // scrollToBottom(); // 移除自动滚动，让用户手动看
+            return id;
+        }
+
+        function finishToolCall(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                const statusEl = el.querySelector('.tool-status');
+                statusEl.className = 'tool-status status-done';
+                statusEl.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15.172L9.19239 14.3644L10 15.172ZM10 15.172L19.1924 5.97961L20.6066 7.39382L10 18L3.63604 11.636L5.05025 10.2218L10 15.172Z"/></svg>
+                    <span>Done</span>
+                `;
+            }
         }
 
         async function showMessage(type, text) {
             const isUser = type === 'user';
             const avatar = isUser ? '我' : 'AI';
             const avatarClass = isUser ? 'user-avatar' : 'ai-avatar';
+            const avatarIcon = isUser ? '' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM11 7H13V9H11V7ZM11 11H13V17H11V11Z"/></svg>'; 
             const msgId = 'msg-' + Date.now();
             
+            // AI 头像在左，用户头像在右
+            const avatarHtml = `
+                <div class="chat-avatar ${avatarClass}">
+                    ${isUser ? '我' : avatarIcon}
+                </div>
+            `;
+
             const html = `
-                <div class="chat-message ${type} fade-in">
-                    <div class="chat-avatar ${avatarClass}">${avatar}</div>
-                    <div class="chat-bubble" id="${msgId}"></div>
+                <div class="chat-message ${type}">
+                    ${!isUser ? avatarHtml : ''}
+                    <div class="chat-content-wrapper">
+                        <div class="chat-bubble" id="${msgId}"></div>
+                    </div>
+                    ${isUser ? avatarHtml : ''}
                 </div>
             `;
             chatContainer.insertAdjacentHTML('beforeend', html);
             
             // 打字机效果
             const bubble = document.getElementById(msgId);
-            // 解析简单的 markdown 加粗
             const parsedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
             
-            // 简单模拟打字，实际渲染用 HTML
-            // 为了简单，直接显示全文字，或者用更复杂的逻辑逐字显示 HTML
-            // 这里我们采用：逐字显示纯文本，最后替换为格式化文本
-            
             if (isUser) {
-                bubble.innerHTML = parsedText; // 用户消息直接显示
+                bubble.innerHTML = parsedText;
             } else {
                 // AI 消息逐字显示
                 const plainText = text.replace(/\*\*/g, '');
-                for (let i = 0; i <= plainText.length; i++) {
-                    bubble.innerText = plainText.slice(0, i);
-                    scrollToBottom();
-                    await new Promise(r => setTimeout(r, 20)); // 打字速度
+                // 快速显示前几个字避免空白
+                bubble.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+                await new Promise(r => setTimeout(r, 600)); // 思考时间
+                bubble.innerHTML = '';
+                
+                let currentHtml = '';
+                // 简单的逐字逻辑，保留加粗标记
+                // 为了演示流畅，这里简化处理，实际可以使用更复杂的 parser
+                const chunks = text.split(/(\*\*.*?\*\*|\n)/g); // 按加粗和换行分割
+                
+                for (const chunk of chunks) {
+                    if (chunk === '\n') {
+                        currentHtml += '<br>';
+                        bubble.innerHTML = currentHtml;
+                    } else if (chunk.startsWith('**')) {
+                        const content = chunk.replace(/\*\*/g, '');
+                        currentHtml += `<strong>${content}</strong>`;
+                        bubble.innerHTML = currentHtml;
+                        await new Promise(r => setTimeout(r, 50));
+                    } else if (chunk) {
+                        for (let i = 0; i < chunk.length; i++) {
+                            currentHtml += chunk[i];
+                            bubble.innerHTML = currentHtml;
+                            await new Promise(r => setTimeout(r, 15));
+                        }
+                    }
                 }
-                bubble.innerHTML = parsedText; // 渲染格式
             }
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         // 启动演示
-        // 使用 IntersectionObserver 在元素进入视口时开始播放
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && !hasPlayed) {
                     playDemo();
                 }
             });
