@@ -632,19 +632,10 @@ def run_server():
         name: str
     
     # MCP Session Manager
-    async def validate_mcp_token(headers: dict) -> bool:
-        """验证 MCP Token"""
-        auth_header = headers.get("authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-            return auth_manager.verify_api_token(token)
-        return False
-    
     session_manager = StreamableHTTPSessionManager(
         app=mcp._mcp_server,
         json_response=False,
         stateless=False,
-        validate_request_hook=validate_mcp_token
     )
     
     @asynccontextmanager
@@ -991,17 +982,29 @@ def run_server():
     
     async def handle_mcp(request: Request):
         """处理 MCP 请求"""
-        # 从 header 获取 token
+        # 从 header 获取 token 并验证
         auth_header = request.headers.get("authorization", "")
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:]
-            session_id = request.headers.get("mcp-session-id", "")
-            client_id = session_id or (
-                f"{request.client.host}:{request.client.port}" 
-                if request.client else "default"
+        if not auth_header.startswith("Bearer "):
+            return JSONResponse(
+                {"error": "Missing or invalid Authorization header"},
+                status_code=401
             )
-            mcp_session_tokens[client_id] = token
-            print(f"[MCP] 会话 {client_id[:20]}... 已认证")
+        
+        token = auth_header[7:]
+        if not auth_manager.verify_api_token(token):
+            return JSONResponse(
+                {"error": "Invalid token"},
+                status_code=401
+            )
+        
+        # 保存 token 到会话
+        session_id = request.headers.get("mcp-session-id", "")
+        client_id = session_id or (
+            f"{request.client.host}:{request.client.port}" 
+            if request.client else "default"
+        )
+        mcp_session_tokens[client_id] = token
+        print(f"[MCP] 会话 {client_id[:20]}... 已认证")
         
         await session_manager.handle_request(
             request.scope, request.receive, request._send
