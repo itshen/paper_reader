@@ -469,10 +469,31 @@ a:hover {
 .btn-danger {
     background: var(--accent-danger);
     color: white;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .btn-danger:hover {
     background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
+.btn-danger svg {
+    width: 16px;
+    height: 16px;
 }
 
 .btn-sm {
