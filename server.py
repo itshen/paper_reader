@@ -632,10 +632,19 @@ def run_server():
         name: str
     
     # MCP Session Manager
+    async def validate_mcp_token(headers: dict) -> bool:
+        """验证 MCP Token"""
+        auth_header = headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header[7:]
+            return auth_manager.verify_api_token(token)
+        return False
+    
     session_manager = StreamableHTTPSessionManager(
         app=mcp._mcp_server,
         json_response=False,
         stateless=False,
+        validate_request_hook=validate_mcp_token
     )
     
     @asynccontextmanager
