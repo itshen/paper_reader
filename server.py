@@ -839,6 +839,29 @@ def run_server():
     
     # ==================== Token 管理 API ====================
     
+    @app.post("/api/system/restart")
+    async def restart_system(request: Request):
+        """重启服务"""
+        if not check_auth(request):
+            return JSONResponse({"success": False, "error": "未登录"})
+        
+        try:
+            import os
+            import signal
+            
+            # 延迟重启，给客户端返回响应的时间
+            def delayed_restart():
+                import time
+                time.sleep(1)
+                os.kill(os.getpid(), signal.SIGTERM)
+            
+            import threading
+            threading.Thread(target=delayed_restart, daemon=True).start()
+            
+            return JSONResponse({"success": True, "message": "服务正在重启"})
+        except Exception as e:
+            return JSONResponse({"success": False, "error": str(e)})
+    
     @app.get("/api/tokens")
     async def list_tokens(request: Request):
         """列出所有 Token"""

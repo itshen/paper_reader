@@ -386,6 +386,18 @@
                 <button type="submit" class="btn-save">保存密码</button>
             </form>
         </div>
+        
+        <!-- 系统管理 -->
+        <div class="admin-section">
+            <h2>⚡ 系统管理</h2>
+            <p class="section-desc">重启服务以应用更新或解决问题</p>
+            <button class="btn-danger" onclick="restartServer()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12H4C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4V8L7 3.5L12 0V2Z"/>
+                </svg>
+                重启服务
+            </button>
+        </div>
     </div>
     
     <script>
@@ -554,6 +566,30 @@
         async function logout() {
             await fetch('/api/auth/logout', { method: 'POST' });
             window.location.href = '/login';
+        }
+        
+        // 重启服务器
+        async function restartServer() {
+            if (!confirm('确定要重启服务吗？服务将短暂不可用（约 3-5 秒）。')) {
+                return;
+            }
+            
+            try {
+                showMessage('正在重启服务...', 'info');
+                const response = await fetch('/api/system/restart', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('服务正在重启，3 秒后刷新页面...', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    showMessage(data.error || '重启失败', 'error');
+                }
+            } catch (error) {
+                showMessage('重启请求失败: ' + error.message, 'error');
+            }
         }
         
         // 显示消息
