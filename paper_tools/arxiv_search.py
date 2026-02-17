@@ -40,7 +40,14 @@ class ArxivSearch:
     """arXiv 搜索客户端"""
     
     def __init__(self):
-        self.client = arxiv.Client()
+        # 设置更长的延迟时间来避免 429 错误
+        self.client = arxiv.Client(
+            page_size=20,
+            delay_seconds=3.0,  # 请求之间等待 3 秒
+            num_retries=5       # 最多重试 5 次
+        )
+        self._last_request_time = 0
+        self._min_interval = 3.0  # 最小请求间隔（秒）
     
     # 常用分类映射
     CATEGORIES = {
@@ -120,7 +127,13 @@ class ArxivSearch:
         
         # 智能排序时获取更多结果用于重排序
         fetch_count = max_results * 3 if is_smart_sort else max_results
-        fetch_count = min(fetch_count, 100)  # 最多获取 100 篇
+        fetch_count = min(fetch_count, 50)  # 减少到最多 50 篇，避免触发限流
+        
+        # 速率限制：确保请求间隔
+        current_time = time.time()
+        time_since_last = current_time - self._last_request_time
+        if time_since_last < self._min_interval:
+            time.sleep(self._min_interval - time_since_last)
         
         search = arxiv.Search(
             query=search_query,
@@ -130,6 +143,7 @@ class ArxivSearch:
         )
         
         results = []
+        self._last_request_time = time.time()
         for idx, paper in enumerate(self.client.results(search)):
             # 提取 arXiv ID（去掉版本号）
             arxiv_id = paper.entry_id.split("/")[-1]
