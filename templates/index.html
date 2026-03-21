@@ -619,7 +619,7 @@
             <h1>让 AI 助手<br><span class="gradient-text">深度阅读学术论文</span></h1>
             <p class="subtitle">
                 Paper Reader 是一个符合 MCP 协议的论文搜索与阅读服务。<br>
-                赋予你的 AI 助手实时搜索 arXiv 论文并阅读全文的能力。
+                覆盖 arXiv 预印本与 OpenAlex 开放文献库，赋予 AI 助手搜索、精读、引用分析的能力。
             </p>
             <div class="hero-btns">
                 <a href="#get-key" class="btn btn-primary">
@@ -645,8 +645,8 @@
                     <div class="icon-box">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z"/></svg>
                     </div>
-                    <h3>智能搜索</h3>
-                    <p>支持多维度的 arXiv 论文搜索。AI 可以根据相关性、时间进行智能排序，支持 cs.AI、cs.LG 等全部分类。</p>
+                    <h3>双源智能搜索</h3>
+                    <p>同时覆盖 <strong>arXiv</strong> 预印本与 <strong>OpenAlex</strong> 开放文献库。支持相关性、时间、引用数综合排序，以及 cs.AI、cs.LG 等分类过滤。</p>
                 </div>
                 <div class="card">
                     <div class="icon-box">
@@ -683,16 +683,22 @@
         // 演示脚本数据 - 自动播放流程
         const demoScript = [
             { type: 'user', text: '最近 DeepSeek 的 mHC 论文讲的是啥？' },
-            { type: 'tool', name: 'search_papers', args: 'query="DeepSeek mHC", sort_by="date"' },
+            { type: 'tool', name: 'search_papers', args: 'query="DeepSeek mHC", source="arxiv"' },
             { 
                 type: 'ai', 
                 text: '为您找到以下相关论文：\n\n**1. mHC: Manifold-Constrained Hyper-Connections**\n   *arXiv: 2512.24880 · 2025-12-31*\n   DeepSeek 团队提出的一种针对超连接架构的改进框架，解决了训练不稳定性。\n\n**2. mHC-GNN: Manifold-Constrained Hyper-Connections for GNN**\n   *arXiv: 2601.02451 · 2026-01-05*\n   将流形约束超连接应用于图神经网络。' 
             },
             { type: 'user', text: '帮我读一下第一篇的核心方法' },
-            { type: 'tool', name: 'get_paper_content', args: 'id="2512.24880"' },
+            { type: 'tool', name: 'get_paper_content', args: 'id="2512.24880", source="arxiv"' },
             { 
                 type: 'ai', 
-                text: '根据论文 **mHC (2512.24880)** 的全文内容：\n\n**核心方法：**\nmHC 利用 **Sinkhorn-Knopp 算法**将超连接的残差矩阵投影到 **Birkhoff 多面体**上，强制其成为**双稳态随机矩阵**（Doubly Stochastic Matrix）。\n\n**作用：**\n这种约束确保了残差流在多层传递中保持**能量守恒**（Feature Mean Conservation），从根本上解决了原始 Hyper-Connections 导致的梯度爆炸问题，同时保持了模型的性能优势。' 
+                text: '根据论文 **mHC (2512.24880)** 的全文内容：\n\n**核心方法：**\nmHC 利用 **Sinkhorn-Knopp 算法**将超连接的残差矩阵投影到 **Birkhoff 多面体**上，强制其成为**双稳态随机矩阵**（Doubly Stochastic Matrix）。\n\n**作用：**\n这种约束确保了残差流在多层传递中保持**能量守恒**，从根本上解决了原始 Hyper-Connections 导致的梯度爆炸问题。' 
+            },
+            { type: 'user', text: '换 OpenAlex 搜一下 LoRA，看看引用最高的是哪篇' },
+            { type: 'tool', name: 'search_papers', args: 'query="LoRA fine-tuning", source="openalex", sort_by="smart"' },
+            { 
+                type: 'ai', 
+                text: '通过 **OpenAlex** 找到以下高引用论文：\n\n**1. LoRA: Low-Rank Adaptation of Large Language Models**\n   *arXiv: 2106.09685 · 2021 · 📊 引用数: 18,432*\n   Hu 等人提出，通过低秩矩阵分解大幅减少微调参数量，已成为高效微调的标准方法。\n\n**2. QLoRA: Efficient Finetuning of Quantized LLMs**\n   *arXiv: 2305.14314 · 2023 · 📊 引用数: 6,218*\n   在 LoRA 基础上结合 4-bit 量化，单卡可微调 65B 模型。' 
             }
         ];
 
