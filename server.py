@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from auth import AuthManager
 from api_logger import APILogger
-from paper_tools import ArxivSearch, PaperCache, PDFConverter
+from paper_tools import ArxivSearch, PaperCache, PDFConverter, OpenAlexSearch
 
 
 # ==================== 配置加载 ====================
@@ -74,6 +74,7 @@ api_logger = APILogger(LOG_DB_PATH, max_records=1000)
 
 # 创建论文工具
 arxiv_search = ArxivSearch()
+openalex_search = OpenAlexSearch()
 paper_cache = PaperCache(
     db_path=PAPERS_DB_PATH,
     pdf_dir=PAPERS_PDF_DIR,
@@ -118,13 +119,14 @@ def search_papers(
     max_results: int = 10,
     sort_by: str = "smart",
     sort_order: str = "descending",
-    category: Optional[str] = None
+    category: Optional[str] = None,
+    source: str = "arxiv",
 ) -> str:
     """
-    搜索 arXiv 论文
-    
+    搜索学术论文
+
     通过关键词搜索学术论文，返回标题、摘要等信息。
-    
+
     Args:
         query: 搜索关键词，如 "machine learning"、"transformer attention"
         max_results: 最大返回数量，默认 10，最多 50
@@ -136,7 +138,7 @@ def search_papers(
         sort_order: 排序顺序，可选值：
                     - "descending": 降序，最新/最相关优先（默认）
                     - "ascending": 升序，最早/最不相关优先
-        category: 分类过滤，**建议指定分类以获得更精准的结果**。常用分类：
+        category: 分类过滤（仅 arxiv 来源有效）。常用分类：
                   - cs.AI: 人工智能
                   - cs.CL: 计算语言学/NLP（推荐用于 LLM、文本处理）
                   - cs.CV: 计算机视觉（推荐用于图像、视频）
@@ -148,38 +150,40 @@ def search_papers(
                   - stat.ML: 统计机器学习
                   - eess.AS: 音频与语音处理
                   - eess.IV: 图像与视频处理
-                  不指定分类会搜索全部领域，结果可能不够精准
-    
+        source: 数据来源，可选值：
+                - "arxiv": arXiv 预印本（默认），CS/物理/数学领域最全
+                - "openalex": OpenAlex 开放文献库，覆盖期刊/会议/非 CS 领域，
+                              返回引用数，smart 排序时加权引用数
+
     Returns:
-        论文列表，包含 arXiv ID、标题、摘要、作者、发布日期、分类
+        论文列表，包含论文 ID、标题、摘要、作者、发布日期、分类
     """
     token = get_current_session_token()
     if not verify_mcp_token(token):
         return "认证失败：请在 MCP 客户端配置有效的 API Token"
-    
+
     try:
-        # 限制最大结果数
         max_results = min(max_results, 50)
-        
-        # 搜索论文
-        papers = arxiv_search.search(
+
+        searcher = openalex_search if source == "openalex" else arxiv_search
+        papers = searcher.search(
             query,
             max_results=max_results,
             sort_by=sort_by,
             sort_order=sort_order,
-            category=category
+            category=category,
         )
-        
+
         if not papers:
             return (
                 f"未找到与 \"{query}\" 相关的论文\n\n"
                 f"💡 建议：\n"
-                f"1. 尝试使用英文关键词搜索（arXiv 论文主要是英文）\n"
+                f"1. 尝试使用英文关键词搜索（学术论文主要是英文）\n"
                 f"2. 使用更通用或更具体的关键词\n"
-                f"3. 检查拼写是否正确"
+                f"3. 检查拼写是否正确\n"
+                f"4. 如果使用 openalex 没有结果，可换回 arxiv 试试"
             )
-        
-        # 格式化结果
+
         sort_by_names = {
             "smart": "智能排序（相关性+时间）",
             "relevance": "相关性",
@@ -188,40 +192,44 @@ def search_papers(
         }
         sort_order_names = {"descending": "降序", "ascending": "升序"}
         sort_info = f"{sort_by_names.get(sort_by, sort_by)} ({sort_order_names.get(sort_order, sort_order)})"
-        
-        lines = [f"📚 搜索结果：\"{query}\"（共 {len(papers)} 篇）"]
+        source_label = "OpenAlex" if source == "openalex" else "arXiv"
+
+        lines = [f"📚 搜索结果：\"{query}\"（共 {len(papers)} 篇，来源：{source_label}）"]
         lines.append(f"🔄 排序: {sort_info}")
-        if category:
+        if category and source == "arxiv":
             lines.append(f"🏷️ 分类过滤: {category}")
         lines.append("")
-        
+
         for i, paper in enumerate(papers, 1):
-            # 截断摘要
             abstract = paper.abstract
             if len(abstract) > 300:
                 abstract = abstract[:300] + "..."
-            
-            # 作者（最多显示 3 个）
+
             authors = paper.authors[:3]
             if len(paper.authors) > 3:
                 authors.append(f"等 {len(paper.authors)} 人")
             authors_str = ", ".join(authors)
-            
+
             lines.append(f"---\n")
             lines.append(f"**{i}. {paper.title}**\n")
-            lines.append(f"📌 arXiv ID: {paper.arxiv_id}")
+            lines.append(f"📌 论文 ID: {paper.arxiv_id}")
             lines.append(f"👤 作者: {authors_str}")
             lines.append(f"📅 发布日期: {paper.published}")
             lines.append(f"🏷️ 分类: {', '.join(paper.categories[:3])}")
+            if paper.citation_count is not None:
+                lines.append(f"📊 引用数: {paper.citation_count}")
             lines.append(f"\n📝 摘要:\n{abstract}\n")
-        
+
         lines.append("---")
         lines.append("\n💡 提示：")
-        lines.append("• 使用 `get_paper_content(arXiv ID)` 获取论文全文")
-        lines.append("• arXiv 论文主要是英文，建议使用英文关键词搜索效果更好")
-        
+        lines.append("• 使用 `get_paper_content(论文 ID)` 获取论文全文")
+        if source == "openalex":
+            lines.append("• OpenAlex 来源仅返回有 Open Access PDF 的论文")
+        else:
+            lines.append("• arXiv 论文主要是英文，建议使用英文关键词搜索效果更好")
+
         return "\n".join(lines)
-        
+
     except Exception as e:
         return f"❌ 搜索失败: {str(e)}"
 
@@ -230,23 +238,23 @@ def search_papers(
 def get_paper_content(
     paper_id: str,
     page: int = 1,
-    max_chars: int = 20000
+    max_chars: int = 20000,
+    source: str = "arxiv",
 ) -> str:
     """
     获取论文全文（Markdown 格式，支持分页）
-    
-    通过 arXiv ID 下载论文 PDF 并转换为 Markdown 格式返回。
+
+    下载论文 PDF 并转换为 Markdown 格式返回。
     论文会缓存在本地，超过 1GB 或 3 个月会自动清理。
-    
+
     Args:
-        paper_id: arXiv 论文 ID，如 "2301.12345"
+        paper_id: 论文 ID
+                  - arXiv 来源：如 "2301.12345" 或 "1706.03762"
+                  - OpenAlex 来源：arXiv ID 或 "oa_W1234567"（以 oa_ 开头的 OpenAlex ID）
         page: 页码，从 1 开始，默认第 1 页
         max_chars: 每页最大字符数，默认 20000，范围 1000-100000
-                   你可以根据需要调整此值：
-                   - 如果只需要快速浏览，可以设置较小值如 5000
-                   - 如果需要完整阅读，可以设置较大值如 50000
-                   - 如果 Token 预算有限，建议使用较小值分多次获取
-    
+        source: 数据来源，"arxiv" 或 "openalex"，需与 search_papers 使用的来源一致
+
     Returns:
         论文的 Markdown 内容（分页），包含：
         - 论文元信息（标题、作者、日期）
@@ -258,138 +266,128 @@ def get_paper_content(
     token = get_current_session_token()
     if not verify_mcp_token(token):
         return "认证失败：请在 MCP 客户端配置有效的 API Token"
-    
+
     try:
-        # 限制 max_chars 范围
         max_chars = max(1000, min(max_chars, 100000))
         page = max(1, page)
-        
+
+        # 缓存 key：加来源前缀，避免不同来源的 ID 冲突
+        cache_key = f"{source}_{paper_id}" if source != "arxiv" else paper_id
+
         # 1. 检查缓存
-        cached = paper_cache.get(paper_id)
+        cached = paper_cache.get(cache_key)
         content = None
         title = None
         abstract = None
         authors = None
         published = None
-        source = "本地缓存"
-        
+        content_source = "本地缓存"
+
         if cached and cached.markdown_path and os.path.exists(cached.markdown_path):
-            # 直接读取缓存的 Markdown
             with open(cached.markdown_path, "r", encoding="utf-8") as f:
                 content = f.read()
             title = cached.title
-            abstract = cached.abstract if hasattr(cached, 'abstract') else None
+            abstract = cached.abstract if hasattr(cached, "abstract") else None
             published = cached.published
-            # 从缓存获取作者
             import json
             try:
                 authors = json.loads(cached.authors) if cached.authors else []
-            except:
+            except Exception:
                 authors = []
-        
+
         if not content:
-            # 2. 获取论文信息
-            paper_info = arxiv_search.get_paper(paper_id)
+            # 2. 获取论文元信息
+            searcher = openalex_search if source == "openalex" else arxiv_search
+            paper_info = searcher.get_paper(paper_id)
             if not paper_info:
-                return f"❌ 未找到论文: {paper_id}"
-            
+                return f"❌ 未找到论文: {paper_id}（来源: {source}）"
+
             title = paper_info.title
             abstract = paper_info.abstract
             authors = paper_info.authors
             published = paper_info.published
-            source = "新下载"
-            
-            # 3. 保存论文元数据到缓存
+            content_source = "新下载"
+
+            # 3. 保存元数据到缓存
             paper_cache.save(
-                arxiv_id=paper_id,
+                arxiv_id=cache_key,
                 title=title,
                 abstract=abstract,
                 authors=authors,
-                published=published
+                published=published,
             )
-            
-            # 4. 下载 PDF（自动验证和重试）
-            pdf_path = paper_cache.get_pdf_path(paper_id)
-            
-            print(f"[Paper] 正在下载 PDF: {paper_id}")
-            success = arxiv_search.download_pdf(paper_id, pdf_path)
+
+            # 4. 下载 PDF
+            pdf_path = paper_cache.get_pdf_path(cache_key)
+            print(f"[Paper] 正在下载 PDF ({source}): {paper_id}")
+            success = searcher.download_pdf(paper_id, pdf_path)
             if not success:
                 return (
                     f"❌ 下载 PDF 失败: {paper_id}\n\n"
                     f"可能原因：\n"
                     f"1. 网络连接不稳定\n"
-                    f"2. arXiv 服务器暂时不可用\n"
-                    f"3. 该论文 PDF 暂时无法访问\n\n"
-                    f"💡 建议稍后重试"
+                    f"2. 该论文没有可下载的 Open Access PDF\n"
+                    f"3. 服务器暂时不可用\n\n"
+                    f"💡 建议稍后重试，或换用 source=\"arxiv\" 搜索该论文"
                 )
-            
+
             # 5. 转换为 Markdown
-            markdown_path = paper_cache.get_markdown_path(paper_id)
-            
+            markdown_path = paper_cache.get_markdown_path(cache_key)
             print(f"[Paper] 正在转换 PDF 为 Markdown: {paper_id}")
             content = pdf_converter.convert(pdf_path, markdown_path)
-            
+
             # 6. 更新缓存路径
-            paper_cache.update_paths(paper_id, pdf_path=pdf_path, markdown_path=markdown_path)
-        
+            paper_cache.update_paths(cache_key, pdf_path=pdf_path, markdown_path=markdown_path)
+
         # 计算分页
         total_chars = len(content)
-        total_pages = (total_chars + max_chars - 1) // max_chars  # 向上取整
-        total_pages = max(1, total_pages)
-        
-        # 确保页码有效
+        total_pages = max(1, (total_chars + max_chars - 1) // max_chars)
         if page > total_pages:
             page = total_pages
-        
-        # 截取当前页内容
+
         start_idx = (page - 1) * max_chars
         end_idx = min(start_idx + max_chars, total_chars)
         page_content = content[start_idx:end_idx]
-        
-        # 构建返回内容
+
         lines = []
         lines.append(f"📄 **{title}**\n")
-        lines.append(f"📌 arXiv ID: {paper_id}")
+        lines.append(f"📌 论文 ID: {paper_id}（来源: {source}）")
         if authors:
-            authors_str = ', '.join(authors[:5])
+            authors_str = ", ".join(authors[:5])
             if len(authors) > 5:
                 authors_str += f" 等 {len(authors)} 人"
             lines.append(f"👤 作者: {authors_str}")
         lines.append(f"📅 发布日期: {published}")
-        lines.append(f"💾 来源: {source}")
+        lines.append(f"💾 来源: {content_source}")
         lines.append("")
-        
-        # 添加摘要
+
         if abstract:
             lines.append("## 📝 摘要")
             lines.append("")
             lines.append(abstract)
             lines.append("")
-        
-        # 分页信息
+
         lines.append("---")
         lines.append(f"📊 **分页信息**: 第 {page}/{total_pages} 页 | 总字符数: {total_chars} | 每页: {max_chars} 字符")
         if total_pages > 1:
             if page < total_pages:
-                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page + 1})` 获取下一页")
+                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page + 1}, source=\"{source}\")` 获取下一页")
             if page > 1:
-                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page - 1})` 获取上一页")
+                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page - 1}, source=\"{source}\")` 获取上一页")
         lines.append("---")
         lines.append("")
-        
-        # 正文内容
+
         lines.append("## 📖 正文内容")
         lines.append("")
         lines.append(page_content)
-        
-        # 如果不是最后一页，提示内容被截断
+
         if page < total_pages:
             lines.append("")
             lines.append("---")
-            lines.append(f"⚠️ 内容已截断，使用 `get_paper_content(\"{paper_id}\", page={page + 1})` 获取下一页")
-        
+            lines.append(f"⚠️ 内容已截断，使用 `get_paper_content(\"{paper_id}\", page={page + 1}, source=\"{source}\")` 获取下一页")
+
         return "\n".join(lines)
-        
+
     except Exception as e:
         return f"❌ 获取论文失败: {str(e)}"
 
@@ -400,14 +398,16 @@ TOOL_MAP = {
     "search_papers": lambda p: _search_papers_internal(
         p.get("query", ""),
         int(p.get("max_results", 10) or 10),
-        p.get("sort_by", "relevance"),
+        p.get("sort_by", "smart"),
         p.get("sort_order", "descending"),
-        p.get("category", None)
+        p.get("category", None),
+        p.get("source", "arxiv"),
     ),
     "get_paper_content": lambda p: _get_paper_content_internal(
         p.get("paper_id", ""),
         int(p.get("page", 1) or 1),
-        int(p.get("max_chars", 20000) or 20000)
+        int(p.get("max_chars", 20000) or 20000),
+        p.get("source", "arxiv"),
     ),
 }
 
@@ -419,190 +419,194 @@ def _search_papers_internal(
     max_results: int = 10,
     sort_by: str = "smart",
     sort_order: str = "descending",
-    category: Optional[str] = None
+    category: Optional[str] = None,
+    source: str = "arxiv",
 ) -> str:
     """搜索论文（内部函数）"""
     try:
         max_results = min(max_results, 50)
-        papers = arxiv_search.search(
+        searcher = openalex_search if source == "openalex" else arxiv_search
+        papers = searcher.search(
             query,
             max_results=max_results,
             sort_by=sort_by,
             sort_order=sort_order,
-            category=category
+            category=category,
         )
-        
+
         if not papers:
             return (
                 f"未找到与 \"{query}\" 相关的论文\n\n"
                 f"💡 建议：\n"
-                f"1. 尝试使用英文关键词搜索（arXiv 论文主要是英文）\n"
+                f"1. 尝试使用英文关键词搜索\n"
                 f"2. 使用更通用或更具体的关键词\n"
                 f"3. 检查拼写是否正确"
             )
-        
+
         sort_by_names = {
             "smart": "智能排序（相关性+时间）",
             "relevance": "相关性",
             "submitted": "提交时间",
-            "updated": "更新时间"
+            "updated": "更新时间",
         }
         sort_order_names = {"descending": "降序", "ascending": "升序"}
         sort_info = f"{sort_by_names.get(sort_by, sort_by)} ({sort_order_names.get(sort_order, sort_order)})"
-        
-        lines = [f"📚 搜索结果：\"{query}\"（共 {len(papers)} 篇）"]
+        source_label = "OpenAlex" if source == "openalex" else "arXiv"
+
+        lines = [f"📚 搜索结果：\"{query}\"（共 {len(papers)} 篇，来源：{source_label}）"]
         lines.append(f"🔄 排序: {sort_info}")
-        if category:
+        if category and source == "arxiv":
             lines.append(f"🏷️ 分类过滤: {category}")
         lines.append("")
-        
+
         for i, paper in enumerate(papers, 1):
             abstract = paper.abstract
             if len(abstract) > 300:
                 abstract = abstract[:300] + "..."
-            
+
             authors = paper.authors[:3]
             if len(paper.authors) > 3:
                 authors.append(f"等 {len(paper.authors)} 人")
             authors_str = ", ".join(authors)
-            
+
             lines.append(f"---\n")
             lines.append(f"**{i}. {paper.title}**\n")
-            lines.append(f"📌 arXiv ID: {paper.arxiv_id}")
+            lines.append(f"📌 论文 ID: {paper.arxiv_id}")
             lines.append(f"👤 作者: {authors_str}")
             lines.append(f"📅 发布日期: {paper.published}")
             lines.append(f"🏷️ 分类: {', '.join(paper.categories[:3])}")
+            if paper.citation_count is not None:
+                lines.append(f"📊 引用数: {paper.citation_count}")
             lines.append(f"\n📝 摘要:\n{abstract}\n")
-        
+
         lines.append("---")
         lines.append("\n💡 提示：")
-        lines.append("• 使用 `get_paper_content(arXiv ID)` 获取论文全文")
-        lines.append("• arXiv 论文主要是英文，建议使用英文关键词搜索效果更好")
-        
+        lines.append("• 使用 `get_paper_content(论文 ID)` 获取论文全文")
+
         return "\n".join(lines)
-        
+
     except Exception as e:
         return f"❌ 搜索失败: {str(e)}"
 
 
-def _get_paper_content_internal(paper_id: str, page: int = 1, max_chars: int = 20000) -> str:
+def _get_paper_content_internal(
+    paper_id: str,
+    page: int = 1,
+    max_chars: int = 20000,
+    source: str = "arxiv",
+) -> str:
     """获取论文全文（内部函数，支持分页）"""
     try:
-        # 限制 max_chars 范围
         max_chars = max(1000, min(max_chars, 100000))
         page = max(1, page)
-        
-        cached = paper_cache.get(paper_id)
+
+        cache_key = f"{source}_{paper_id}" if source != "arxiv" else paper_id
+
+        cached = paper_cache.get(cache_key)
         content = None
         title = None
         abstract = None
         authors = None
         published = None
-        source = "本地缓存"
-        
+        content_source = "本地缓存"
+
         if cached and cached.markdown_path and os.path.exists(cached.markdown_path):
             with open(cached.markdown_path, "r", encoding="utf-8") as f:
                 content = f.read()
             title = cached.title
-            abstract = cached.abstract if hasattr(cached, 'abstract') else None
+            abstract = cached.abstract if hasattr(cached, "abstract") else None
             published = cached.published
             import json
             try:
                 authors = json.loads(cached.authors) if cached.authors else []
-            except:
+            except Exception:
                 authors = []
-        
+
         if not content:
-            paper_info = arxiv_search.get_paper(paper_id)
+            searcher = openalex_search if source == "openalex" else arxiv_search
+            paper_info = searcher.get_paper(paper_id)
             if not paper_info:
                 return f"❌ 未找到论文: {paper_id}"
-            
+
             title = paper_info.title
             abstract = paper_info.abstract
             authors = paper_info.authors
             published = paper_info.published
-            source = "新下载"
-            
+            content_source = "新下载"
+
             paper_cache.save(
-                arxiv_id=paper_id,
+                arxiv_id=cache_key,
                 title=title,
                 abstract=abstract,
                 authors=authors,
-                published=published
+                published=published,
             )
-            
-            pdf_path = paper_cache.get_pdf_path(paper_id)
-            
-            print(f"[Paper] 正在下载 PDF: {paper_id}")
-            success = arxiv_search.download_pdf(paper_id, pdf_path)
+
+            pdf_path = paper_cache.get_pdf_path(cache_key)
+            print(f"[Paper] 正在下载 PDF ({source}): {paper_id}")
+            success = searcher.download_pdf(paper_id, pdf_path)
             if not success:
                 return (
                     f"❌ 下载 PDF 失败: {paper_id}\n\n"
                     f"可能原因：\n"
                     f"1. 网络连接不稳定\n"
-                    f"2. arXiv 服务器暂时不可用\n"
-                    f"3. 该论文 PDF 暂时无法访问\n\n"
+                    f"2. 该论文没有可下载的 Open Access PDF\n"
+                    f"3. 服务器暂时不可用\n\n"
                     f"💡 建议稍后重试"
                 )
-            
-            markdown_path = paper_cache.get_markdown_path(paper_id)
-            
+
+            markdown_path = paper_cache.get_markdown_path(cache_key)
             print(f"[Paper] 正在转换 PDF 为 Markdown: {paper_id}")
             content = pdf_converter.convert(pdf_path, markdown_path)
-            
-            paper_cache.update_paths(paper_id, pdf_path=pdf_path, markdown_path=markdown_path)
-        
-        # 计算分页
+            paper_cache.update_paths(cache_key, pdf_path=pdf_path, markdown_path=markdown_path)
+
         total_chars = len(content)
-        total_pages = (total_chars + max_chars - 1) // max_chars
-        total_pages = max(1, total_pages)
-        
+        total_pages = max(1, (total_chars + max_chars - 1) // max_chars)
         if page > total_pages:
             page = total_pages
-        
+
         start_idx = (page - 1) * max_chars
         end_idx = min(start_idx + max_chars, total_chars)
         page_content = content[start_idx:end_idx]
-        
-        # 构建返回内容
+
         lines = []
         lines.append(f"📄 **{title}**\n")
-        lines.append(f"📌 arXiv ID: {paper_id}")
+        lines.append(f"📌 论文 ID: {paper_id}（来源: {source}）")
         if authors:
-            authors_str = ', '.join(authors[:5])
+            authors_str = ", ".join(authors[:5])
             if len(authors) > 5:
                 authors_str += f" 等 {len(authors)} 人"
             lines.append(f"👤 作者: {authors_str}")
         lines.append(f"📅 发布日期: {published}")
-        lines.append(f"💾 来源: {source}")
+        lines.append(f"💾 来源: {content_source}")
         lines.append("")
-        
+
         if abstract:
             lines.append("## 📝 摘要")
             lines.append("")
             lines.append(abstract)
             lines.append("")
-        
+
         lines.append("---")
         lines.append(f"📊 **分页信息**: 第 {page}/{total_pages} 页 | 总字符数: {total_chars} | 每页: {max_chars} 字符")
         if total_pages > 1:
             if page < total_pages:
-                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page + 1})` 获取下一页")
+                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page + 1}, source=\"{source}\")` 获取下一页")
             if page > 1:
-                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page - 1})` 获取上一页")
+                lines.append(f"💡 使用 `get_paper_content(\"{paper_id}\", page={page - 1}, source=\"{source}\")` 获取上一页")
         lines.append("---")
         lines.append("")
         lines.append("## 📖 正文内容")
         lines.append("")
         lines.append(page_content)
-        
+
         if page < total_pages:
             lines.append("")
             lines.append("---")
-            lines.append(f"⚠️ 内容已截断，使用 `get_paper_content(\"{paper_id}\", page={page + 1})` 获取下一页")
-        
+            lines.append(f"⚠️ 内容已截断，使用 `get_paper_content(\"{paper_id}\", page={page + 1}, source=\"{source}\")` 获取下一页")
+
         return "\n".join(lines)
-        
+
     except Exception as e:
         return f"❌ 获取论文失败: {str(e)}"
 

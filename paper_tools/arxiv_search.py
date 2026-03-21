@@ -9,7 +9,7 @@ import os
 import time
 import arxiv
 from typing import List, Dict, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -23,7 +23,9 @@ class PaperInfo:
     published: str
     pdf_url: str
     categories: List[str]
-    
+    source: str = "arxiv"           # 数据来源：arxiv / openalex
+    citation_count: Optional[int] = None  # 引用数（OpenAlex 提供）
+
     def to_dict(self) -> Dict:
         return {
             "arxiv_id": self.arxiv_id,
@@ -32,11 +34,33 @@ class PaperInfo:
             "authors": self.authors,
             "published": self.published,
             "pdf_url": self.pdf_url,
-            "categories": self.categories
+            "categories": self.categories,
+            "source": self.source,
+            "citation_count": self.citation_count,
         }
 
 
-class ArxivSearch:
+class BasePaperSource:
+    """论文来源基类，所有来源须实现此接口"""
+
+    def search(
+        self,
+        query: str,
+        max_results: int = 10,
+        sort_by: str = "smart",
+        sort_order: str = "descending",
+        category: Optional[str] = None,
+    ) -> List[PaperInfo]:
+        raise NotImplementedError
+
+    def get_paper(self, paper_id: str) -> Optional[PaperInfo]:
+        raise NotImplementedError
+
+    def download_pdf(self, paper_id: str, save_path: str) -> bool:
+        raise NotImplementedError
+
+
+class ArxivSearch(BasePaperSource):
     """arXiv 搜索客户端"""
     
     def __init__(self):
@@ -157,7 +181,8 @@ class ArxivSearch:
                 authors=[author.name for author in paper.authors],
                 published=paper.published.strftime("%Y-%m-%d"),
                 pdf_url=paper.pdf_url,
-                categories=paper.categories
+                categories=paper.categories,
+                source="arxiv",
             )
             # 保存原始排名用于智能排序
             info._relevance_rank = idx
@@ -231,7 +256,8 @@ class ArxivSearch:
                     authors=[author.name for author in paper.authors],
                     published=paper.published.strftime("%Y-%m-%d"),
                     pdf_url=paper.pdf_url,
-                    categories=paper.categories
+                    categories=paper.categories,
+                    source="arxiv",
                 )
         except Exception:
             pass
